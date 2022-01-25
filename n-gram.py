@@ -9,8 +9,8 @@ discounting = 0.75 #Kneser-Ney smoothingのdiscount
 
 counts = {} #各単語の出現回数を保存するための辞書
 context_counts = {} #先行する単語の出現回数を保存するための辞書
-preceding_words_types = {} #先行する単語の種類数を保存するための辞書　Kneser-Ney smoothingのλ計算用
-following_words_types = {} #後行する単語の種類数を保存するための辞書　Kneser-Ney smoothingのCkn(continuationcount)計算用
+following_words_types = {} #後行する単語の種類数を保存するための辞書　Kneser-Ney smoothingのλ計算用
+preceding_words_types = {} #先行する単語の種類数を保存するための辞書　Kneser-Ney smoothingのCkn(continuationcount)計算用
 dirname = os.getcwd() #現在のファイルがあるフォルダのパスを取得
 
 #-------------------------------------------------------
@@ -60,29 +60,29 @@ def all_context(words, n): #設定n_gram以下の単語組み合わせを全て�
             else: #単語が初めて出現した時
                 counts[' '.join(str_words[i])] = 1 #初回カウント定義
 
-                if (' '.join(str_words[i][:gram-1])) in preceding_words_types: #先行する単語群の種類数を格納する λの{V:C(Wi-n+1 Wi-1 V)>0} 計算用
-                    preceding_words_types[' '.join(str_words[i][:gram-1])] += 1 #{V:C(Wi-n+1 Wi-1 V)>0} に相当
+                if (' '.join(str_words[i][:gram-1])) in following_words_types: #後行する単語群の種類数を格納する λの{V:C(Wi-n+1 Wi-1 V)>0} 計算用
+                    following_words_types[' '.join(str_words[i][:gram-1])] += 1 #{V:C(Wi-n+1 Wi-1 V)>0} に相当
                 else:
-                    preceding_words_types[' '.join(str_words[i][:gram-1])] = 1 #初回カウント定義
+                    following_words_types[' '.join(str_words[i][:gram-1])] = 1 #初回カウント定義
 
                 if gram >= 2: #bigram以上の時
-                    if (' '.join(str_words[i][1:]) + '\t' + str(gram - 1)) in following_words_types: #後行する単語群の種類数を格納する {V:C(V Wi-n+1 Wi)>0} 計算用
-                        following_words_types[' '.join(str_words[i][1:]) + '\t' + str(gram - 1)] += 1 #{V:C(V Wi-n+1 Wi)>0} に相当
+                    if (' '.join(str_words[i][1:]) + '\t' + str(gram - 1)) in preceding_words_types: #先行する単語群の種類数を格納する {V:C(V Wi-n+1 Wi)>0} 計算用
+                        preceding_words_types[' '.join(str_words[i][1:]) + '\t' + str(gram - 1)] += 1 #{V:C(V Wi-n+1 Wi)>0} に相当
                     else:
-                        following_words_types[' '.join(str_words[i][1:]) + '\t' + str(gram - 1)] = 1 #初回カウント定義
+                        preceding_words_types[' '.join(str_words[i][1:]) + '\t' + str(gram - 1)] = 1 #初回カウント定義
 
                     if gram == 2: #bigramの時
-                        if (str_words[i][0] + '\t' + '0') not in following_words_types: #後行する単語群の種類数を格納する ΣW'{V:C(V W')>0} 計算用
-                            following_words_types[str_words[i][0] + '\t' + '0'] = 1 #重複判定用
-                            following_words_types[''] += 1 #ΣW'{V:C(V W')>0} に相当
+                        if (str_words[i][0] + '\t' + '0') not in preceding_words_types: #先行する単語群の種類数を格納する ΣW'{V:C(V W')>0} 計算用
+                            preceding_words_types[str_words[i][0] + '\t' + '0'] = 1 #重複判定用
+                            preceding_words_types[''] += 1 #ΣW'{V:C(V W')>0} に相当
 
                     if gram >= 3: #trigram以上の時
-                        if (' '.join(str_words[i][:gram - 1])) not in following_words_types: #後行する単語群の種類数を格納する ΣW'{V:C(V Wi-n+1 W')>0} 計算用
-                            following_words_types[' '.join(str_words[i][:gram - 1])] = 1
-                            if (' '.join(str_words[i][1:gram - 1]) + '\t' + str(gram - 1)) in following_words_types:
-                                following_words_types[' '.join(str_words[i][1:gram - 1]) + '\t' + str(gram - 1)] += 1 #ΣW'{V:C(V Wi-n+1 W')>0} に相当
+                        if (' '.join(str_words[i][:gram - 1])) not in preceding_words_types: #先行する単語群の種類数を格納する ΣW'{V:C(V Wi-n+1 W')>0} 計算用
+                            preceding_words_types[' '.join(str_words[i][:gram - 1])] = 1
+                            if (' '.join(str_words[i][1:gram - 1]) + '\t' + str(gram - 1)) in preceding_words_types:
+                                preceding_words_types[' '.join(str_words[i][1:gram - 1]) + '\t' + str(gram - 1)] += 1 #ΣW'{V:C(V Wi-n+1 W')>0} に相当
                             else:
-                                following_words_types[' '.join(str_words[i][1:gram - 1]) + '\t' + str(gram - 1)] = 1 #初回カウント定義
+                                preceding_words_types[' '.join(str_words[i][1:gram - 1]) + '\t' + str(gram - 1)] = 1 #初回カウント定義
 
             if ' '.join(str_words[i][:gram-1]) in context_counts: #先行する単語群の出現回数を格納する
                 context_counts[' '.join(str_words[i][:gram - 1])] += 1 #C(Wi-n+1 Wi-1) に相当
@@ -97,7 +97,7 @@ def load_train(tgtfile, n): #ファイル読み込み用関数
     with open(tgtfile, mode='rt') as tgt_f:
         save_list = []
         context_counts[""] = 0
-        following_words_types[''] = 0
+        preceding_words_types[''] = 0
         for line in tgt_f:
             words = line.translate(str.maketrans({',': '', '.': ''})).split()
             words.insert(0, "<s>")
@@ -120,22 +120,22 @@ def load_train(tgtfile, n): #ファイル読み込み用関数
             probability = counts[ngram] / context_counts[context]
             save_list.append(str(ngram) + '\t' + str(probability))
 
-        #print(f'preceding_words_types: {preceding_words_types}')
+        #print(f'following_words_types: {following_words_types}')
         savefile_en(save_list, n)
 
 
 
         for_confirm = [] #デバッグ用
 
-        '''for ngram, count in preceding_words_types.items():
-            for_confirm.append('preceding: ' + str(ngram) + '\t' + str(count))
+        '''for ngram, count in following_words_types.items():
+            for_confirm.append('following: ' + str(ngram) + '\t' + str(count))
 
-        savefile_en(for_confirm, 'preceding')#'''
+        savefile_en(for_confirm, 'following')#'''
         
         '''for_confirm = [] #デバッグ用
 
-        for ngram, count in following_words_types.items():
-            for_confirm.append('following: ' + str(ngram) + '\t' + str(count))
+        for ngram, count in preceding_words_types.items():
+            for_confirm.append('preceding: ' + str(ngram) + '\t' + str(count))
 
         savefile_en(for_confirm, 'mini')#'''
 
@@ -155,7 +155,7 @@ test_vocaburary = {} #testデータの語彙数把握用
 
 def normalizing_constant(str_words, gram, d): #Kneser-Ney smoothingのλ計算関数
     #引数: (str_words: 対象となるn-gramに分けた1文　範囲[:gram - 1]、gram: gram数, d: discounting)¥
-    return (d / context_counts[' '.join(str_words)]) * preceding_words_types[' '.join(str_words)]
+    return (d / context_counts[' '.join(str_words)]) * following_words_types[' '.join(str_words)]
 
 def probability_KN(words, gram, pro_KN, total, d):
     #引数: (words: 対象となる1文、gram: gram数, pro_KN: probabilty_KNの値、total: testデータの語彙数、d: discounting)
@@ -173,7 +173,7 @@ def probability_KN(words, gram, pro_KN, total, d):
                     #1項目: max(C(Wi-n+1:i) - d, 0) / C(Wi-n+1:i-1)　に相当
                     #2項目: λ(Wi-n+1:i-1) * Pkn(Wi|Wi-n+2:i-1)　に相当
                 else: #for lower orders 
-                    pro_KN += max(following_words_types[' '.join(str_words[i][1:]) + '\t' + str(gram - 1)] - d, 0) / following_words_types[' '.join(str_words[i][1:gram]) + '\t' + str(gram)] + normalizing_constant(str_words[i][:gram - 1], gram, d) * probability_KN(words, gram - 1, pro_KN, total, d)
+                    pro_KN += max(preceding_words_types[' '.join(str_words[i][1:]) + '\t' + str(gram - 1)] - d, 0) / preceding_words_types[' '.join(str_words[i][1:gram]) + '\t' + str(gram)] + normalizing_constant(str_words[i][:gram - 1], gram, d) * probability_KN(words, gram - 1, pro_KN, total, d)
                     #1項目: max(|{V:C(V Wi-n+2 : Wi)}| - d, 0) / ΣW'|{V:C(V Wi-n+2 : Wi-1 W')}|　に相当
                     #2項目: λ(Wi-n+1:i-1) * Pkn(Wi|Wi-n+2:i-1)　に相当
             else: #未知語だった場合
@@ -189,7 +189,7 @@ def probability_KN(words, gram, pro_KN, total, d):
                     #1項目: max(C(Wi) - d, 0) / ΣW' C(W')　に相当
                     #2項目: d/V　に相当
                 elif ' '.join(str_words[i]) != '<s>':
-                    pro_KN += max(following_words_types[' '.join(str_words[i])  + '\t' + str(0)] - d, 0) / following_words_types[''] + d/total
+                    pro_KN += max(preceding_words_types[' '.join(str_words[i])  + '\t' + str(0)] - d, 0) / preceding_words_types[''] + d/total
                     #1項目: max(|{V:C(V Wi)}| - d, 0) / ΣW'|{V:C(V W')}|　に相当
                     #2項目: d/V　に相当
             else: #未知語だった場合
